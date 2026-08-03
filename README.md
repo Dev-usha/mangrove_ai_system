@@ -5,6 +5,7 @@ An AI-powered mangrove ecosystem monitoring system that uses computer vision and
 The system combines image preprocessing, feature extraction, machine learning models, and an interactive Streamlit interface for supporting mangrove conservation and monitoring efforts.
 
 ---
+live demo- https://mangroveaisystem-sx3ryldoe85wxgarnoiz6b.streamlit.app/
 
 # 🚀 Features
 
