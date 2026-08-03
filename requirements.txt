@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+opencv-python
+scikit-image
+scipy
+PyWavelets
+scikit-learn
+joblib
+streamlit
+pillow
+reportlab
+bcrypt

@@ -1,0 +1,39 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+.env.*
+
+# VS Code settings
+.vscode/
+
+# Generated outputs
+outputs/
+
+# Logs
+*.log
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large/raw datasets
+data/raw/
+data/processed/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Model files
+# Keep saved_models because deployment needs trained models
