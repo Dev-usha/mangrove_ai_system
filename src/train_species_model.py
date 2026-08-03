@@ -16,7 +16,7 @@ def train_species_classifier(df):
     print("SPECIES IDENTIFICATION MODEL")
     print("==============================")
 
-    X = df.drop(columns=["label", "x", "y", "image_id"])
+    X = df.drop(columns=["label", "x", "y", "image_id","leaf_health_index_target"],errors="ignore")
     X = X.replace([np.inf, -np.inf], np.nan).fillna(0)
 
     y = df["label"]
