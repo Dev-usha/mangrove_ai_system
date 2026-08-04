@@ -1,54 +1,50 @@
-import os
-import sqlite3
 import bcrypt
+import psycopg
+import streamlit as st
 from datetime import datetime
-
-
-DB_DIR = "database"
-DB_PATH = os.path.join(DB_DIR, "mangroveai_users.db")
+from psycopg.errors import UniqueViolation
 
 
 def get_connection():
-    os.makedirs(DB_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    return conn
+    return psycopg.connect(st.secrets["DATABASE_URL"])
 
 
 def initialize_user_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id BIGSERIAL PRIMARY KEY,
             full_name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             role TEXT DEFAULT 'user',
-            created_at TEXT NOT NULL
+            created_at TIMESTAMP NOT NULL
         )
-        """
-    )
+    """)
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 
 def hash_password(password):
-    password_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode("utf-8")
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
 
 
 def verify_password(password, password_hash):
-    password_bytes = password.encode("utf-8")
-    hash_bytes = password_hash.encode("utf-8")
-    return bcrypt.checkpw(password_bytes, hash_bytes)
+    return bcrypt.checkpw(
+        password.encode("utf-8"),
+        password_hash.encode("utf-8")
+    )
 
 
 def register_user(full_name, email, password):
+
     initialize_user_database()
 
     full_name = full_name.strip()
@@ -61,34 +57,47 @@ def register_user(full_name, email, password):
         return False, "Email is required."
 
     if len(password) < 6:
-        return False, "Password must be at least 6 characters long."
+        return False, "Password must be at least 6 characters."
 
     password_hash = hash_password(password)
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
+
         cursor.execute(
             """
-            INSERT INTO users (full_name, email, password_hash, created_at)
-            VALUES (?, ?, ?, ?)
-            """,
+            INSERT INTO users
             (full_name, email, password_hash, created_at)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (
+                full_name,
+                email,
+                password_hash,
+                datetime.now(),
+            ),
         )
 
         conn.commit()
-        conn.close()
 
-        return True, "Account created successfully. You can now log in."
+        return True, "Account created successfully."
 
-    except sqlite3.IntegrityError:
-        conn.close()
+    except UniqueViolation:
+
+        conn.rollback()
+
         return False, "An account with this email already exists."
+
+    finally:
+
+        cursor.close()
+        conn.close()
 
 
 def login_user(email, password):
+
     initialize_user_database()
 
     email = email.strip().lower()
@@ -98,14 +107,21 @@ def login_user(email, password):
 
     cursor.execute(
         """
-        SELECT id, full_name, email, password_hash, role
+        SELECT
+            id,
+            full_name,
+            email,
+            password_hash,
+            role
         FROM users
-        WHERE email = ?
+        WHERE email = %s
         """,
-        (email,)
+        (email,),
     )
 
     user = cursor.fetchone()
+
+    cursor.close()
     conn.close()
 
     if user is None:
@@ -120,7 +136,7 @@ def login_user(email, password):
         "user_id": user_id,
         "full_name": full_name,
         "email": email,
-        "role": role
+        "role": role,
     }
 
     return True, user_data, "Login successful."

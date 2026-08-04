@@ -10,4 +10,6 @@ joblib
 streamlit
 pillow
 reportlab
+psycopg[binary]
 bcrypt
+
